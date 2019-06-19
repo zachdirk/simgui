@@ -2,10 +2,12 @@
 #include "examples/imgui_impl_glfw.h"
 #include "examples/imgui_impl_opengl3.h"
 #include "sim_avr.h"
+#include "file_manager.h"
 #include <GL/gl3w.h>  
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 #include <string>
+#include <iostream>
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -15,6 +17,15 @@ static void glfw_error_callback(int error, const char* description)
 int main(int argc, char *argv[])
 {
     // Setup window
+    if (argc < 2)
+    {
+        std::cout << "Need at least a file name to compile.\n";
+        return(1);
+    }
+    std::string s(argv[1]);
+    file_manager fm(s);
+
+    /* 
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return 1;
@@ -173,4 +184,5 @@ int main(int argc, char *argv[])
         glfwMakeContextCurrent(window);
         glfwSwapBuffers(window);
     }
+    */
 }

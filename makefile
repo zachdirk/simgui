@@ -9,15 +9,18 @@ SIMAVRBIN=$(SIMAVR)/bin
 SIMAVRSOURCES=$(wildcard $(SIMAVR)/cores/*.c) $(wildcard $(SIMAVR)/sim/*.c)
 SIMAVROBJS=$(patsubst %.c, %.o, $(SIMAVRSOURCES))
 SIMGUI=$(ROOTDIR)/simgui
+SIMGUISRC=$(SIMGUI)/src
+SIMGUIINCLUDE=$(SIMGUI)/include
 SIMGUIBIN=$(SIMGUI)/bin
 SIMGUIBUILD=$(SIMGUI)/build
-SIMGUIOBJS=$(SIMGUIBIN)/main.o
+SIMGUISOURCES=$(wildcard $(SIMGUISRC)/*.cpp)
+SIMGUIOBJS=$(patsubst src/%.cpp, bin/%.o, $(SIMGUISOURCES))
 GL3W=$(ROOTDIR)/gl3w
 GL3WBIN=$(GL3W)/bin
 TARGET=$(SIMGUIBUILD)/simgui
 OBJS=$(SIMAVRBIN)/simavr.o $(IMGUIBIN)/imgui.o $(SIMGUIBIN)/simgui.o $(GL3WBIN)/gl3w.o
 LIBS += -lGL -lelf `pkg-config --static --libs glfw3`
-CXXFLAGS += -I /usr/include -I$(SIMAVR) -I$(IMGUI) -I$(SIMAVR)/sim -I$(SIMAVR)/sim/avr -I$(SIMAVR)/cores -I$(SIMAVR)/cores/avr
+CXXFLAGS += -I /usr/include -I$(SIMGUIINCLUDE) -I$(SIMAVR) -I$(IMGUI) -I$(SIMAVR)/sim -I$(SIMAVR)/sim/avr -I$(SIMAVR)/cores -I$(SIMAVR)/cores/avr
 LDFLAGS += -L/usr/lib/gcc/x86_64-linux-gnu/7.4.0
 
 
@@ -50,16 +53,19 @@ $(IMGUIBIN)/%.o: $(IMGUI)/%.cpp
 $(SIMGUIBIN)/simgui.o: $(SIMGUIOBJS)
 	$(LD) $(LDFLAGS) -r $(SIMGUIOBJS) -o $@
 
-$(SIMGUIBIN)/%.o: $(SIMGUI)/%.cpp
+$(SIMGUIBIN)/%.o: $(SIMGUISRC)/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-clean: cleansimavr cleanimgui cleansimgui
+clean: cleangl3w cleansimavr cleanimgui cleansimgui
+
+cleangl3w:
+	mv $(GL3WBIN)/gl3w.o ~/.Trash/
 
 cleansimavr:
-	rm $(SIMAVROBJS)
+	mv $(SIMAVROBJS) ~/.Trash
 
 cleanimgui:
-	rm $(IMGUIOBJS)
+	mv $(IMGUIOBJS) ~/.Trash
 
 cleansimgui:
-	rm $(SIMGUIOBJS)
+	mv $(SIMGUIOBJS) ~/.Trash
