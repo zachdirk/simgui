@@ -3,43 +3,99 @@
 #include <string>
 #include <iostream>
 
-
-simgui::file_manager::file_manager(std::string& file_name) : file_name(file_name)
+std::string file_manager::get_file_name_no_extension(const std::string& file_name)
 {
-    int pos = file_name.find_last_of('.');
-    std::string name = file_name.substr(0, pos);
-    std::string extension = file_name.substr(pos + 1); //get the file type
-    file_extension = extension;
+    return file_name.substr(0, file_name.find_last_of('.'));
+}
+
+file_manager::file_type file_manager::get_file_type(const std::string& file_name)
+{
+    std::string extension = file_name.substr(file_name.find_last_of('.') + 1); //get the file extension
+    if (extension == "c")
+        return file_type::C;
+    else if (extension == "s")
+        return file_type::S;
+    else if (extension == "asm")
+        return file_type::ASM;
+    else
+        return file_type::OTHER;
     
-    //verify it's of the correct type
-    if (file_extension == "c")
+}
+
+bool file_manager::file_exists(const std::string& file_name)
+{
+    std::ifstream f(file_name.c_str()); //verify the file actually exists
+    return f.good();
+}
+
+file_manager::file_manager(std::string& file_name) :good(true) //assume it succeeds until it fails
+{
+    cf.source_file = file_name;
+    cf.no_extension = get_file_name_no_extension(file_name);
+    file_type extension = get_file_type(file_name);
+    if (extension == file_type::C)
     {
-        file_type = file_type::C;
+        cf.type = file_type::C;
+        cf.assembly_file = cf.no_extension + ".s";
     }
-    else if (file_extension == "s")
+    else if (extension == file_type::S)
     {
-        file_type = file_type::S;
+        cf.type = file_type::S;
+        cf.assembly_file = file_name;
     }
-    else if (file_extension == "asm")
+    else if (extension == file_type::ASM)
     {
-        file_type = file_type::ASM;
+        cf.type = file_type::ASM;
+        cf.assembly_file = file_name;
     }
     else 
     {
-        throw new std::runtime_error(file_name + " doesn't appear to be a .c, .s, or .asm file\n");
-    } 
-    std::ifstream f(file_name.c_str()); //verify the file actually exists
-    if (!(f.good()))
-        throw new std::runtime_error(file_name + " couldn't be found.\n");
+        std::cerr << file_name << "doesn't appear to be a .c, .s, or .asm file\n";
+        good = false;
+    }
+    //at this point we know it's a valid file type
+    std::cout << "hello?\n";
+    cf.listing_file = cf.no_extension + ".lst";
+    cf.object_file = cf.no_extension + ".o";
+    cf.hex_file = cf.no_extension + ".hex";
+    if (!file_exists(file_name.c_str())) //verify the file actually exists
+    {
+        std::cerr << file_name << " couldn't be found.\n";
+        good = false;
+    }
+
 }
 
-bool simgui::file_manager::compile(simgui::file_manager::compile_args c)
+bool file_manager::generate_hex()
 {
+    //todo
+    int err = 0;
+    return err != 0;
+}
+
+bool file_manager::assemble()
+{
+    //hard code the assembly options for now
+    std::string command = "avr-as -ahlns -L -mmcu=atmega2560 ";
+    command += cf.assembly_file;
+    command += " -o ";
+    command += cf.object_file;
+    command += " > ";
+    command += cf.listing_file;
+    std::cout << command << "\n";
+    int err = system(command.c_str());
+    return err != 0; //I'm assuming this will return 
+}
+
+bool file_manager::compile(const file_manager::compile_args& c)
+{
+    //assume file type is C
     std::string args = "-mmcu=";
-    args += c.mmcu += " ";
-    if ((c.type == simgui::file_manager::file_type::C))
+    args += c.mmcu ;
+    args += " ";
+    if ((c.type == file_manager::file_type::C))
     {
-        args += "Wa,";
+        args += "-Wa,-a";
     }
     if (c.omit_false_conditionals)
     {
@@ -75,18 +131,33 @@ bool simgui::file_manager::compile(simgui::file_manager::compile_args c)
     }
     if (c.keep_locals)
     {
-        args +=",-L";
+        args +=",-L ";
     }
+    if (c.debug)
+    {
+        args += "-g ";
+    }
+    if (c.save_temps)
+    {
+        args += "-save-temps ";
+    }
+    if (c.verbose_asm)
+    {
+        args += "-fverbose-asm ";
+    }
+    args += cf.source_file;
+    args += " -o ";
+    args += cf.object_file;
+    args += " > ";
     if (c.file_name != "")
     {
-        args += ",=";
         args += c.file_name;
     } 
     else
     {
-        args += ",=";
-        args += file_name;
+        args += cf.listing_file;
     }
-    std::cout << args << "\n";
-    return false;
+    std::string command = "avr-gcc " + args;
+    int err = system(command.c_str());
+    return err != 0;
 }

@@ -19,12 +19,31 @@ int main(int argc, char *argv[])
     // Setup window
     if (argc < 2)
     {
-        std::cout << "Need at least a file name to compile.\n";
+        std::cerr << "Need at least a file name to compile.\n";
         return(1);
     }
     std::string s(argv[1]);
     file_manager fm(s);
-
+    if (!(fm.is_good()))
+    {
+        std::cerr << "There was a problem with the file you provided.\n";
+        return(1);
+    }
+    file_manager::compile_args c;
+    /* figure this part out later
+    if (fm.compilation_file_type == file_manager::C)
+    {
+        fm.compile(c);
+    }*/
+    std::cout << "Test\n";
+    fm.assemble();
+    fm.generate_hex();
+    return(1);
+    
+    /*
+    std::cout << "The listing file is: " << list_file << "\n";
+    avr_t* avr = run_avr_main(7, argv)
+    -f 16000000 -m atmega2560 --dump-vitals - test.hex
     /* 
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
