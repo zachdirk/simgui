@@ -54,7 +54,6 @@ file_manager::file_manager(std::string& file_name) :good(true) //assume it succe
         good = false;
     }
     //at this point we know it's a valid file type
-    std::cout << "hello?\n";
     cf.listing_file = cf.no_extension + ".lst";
     cf.object_file = cf.no_extension + ".o";
     cf.hex_file = cf.no_extension + ".hex";
@@ -69,7 +68,12 @@ file_manager::file_manager(std::string& file_name) :good(true) //assume it succe
 bool file_manager::generate_hex()
 {
     //todo
-    int err = 0;
+    std::string command = "objcopy -O ihex ";
+    command += cf.object_file;
+    command += " ";
+    command += cf.hex_file;
+    std::cout << command << "\n";
+    int err = system(command.c_str());
     return err != 0;
 }
 

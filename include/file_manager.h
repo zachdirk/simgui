@@ -77,7 +77,7 @@ public:
     //getters
     bool is_good() {return good;}
     file_type compilation_file_type() {return cf.type;}
-
+    std::string get_hex_file() {return cf.hex_file;}
     //compilation functions
     bool compile(const compile_args& c);
     bool assemble();

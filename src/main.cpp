@@ -35,16 +35,10 @@ int main(int argc, char *argv[])
     {
         fm.compile(c);
     }*/
-    std::cout << "Test\n";
     fm.assemble();
     fm.generate_hex();
-    return(1);
-    
-    /*
-    std::cout << "The listing file is: " << list_file << "\n";
-    avr_t* avr = run_avr_main(7, argv)
-    -f 16000000 -m atmega2560 --dump-vitals - test.hex
-    /* 
+    const char* hex_file = fm.get_hex_file().c_str();
+    const char* simavr_args[] = {"./simavr", "-f", "16000000", "-m", "atmega2560", "--dump-vitals", "-", hex_file};
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return 1;
@@ -73,7 +67,7 @@ int main(int argc, char *argv[])
     bool show_buttons = false;
     bool show_shield = false;
     bool show_code_window = false;
-    avr_t* avr = run_avr_main(argc, argv);
+    avr_t* avr = run_avr_main(8, const_cast<char**>(simavr_args)); 
     while (!glfwWindowShouldClose(window))
     {
         ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -203,5 +197,4 @@ int main(int argc, char *argv[])
         glfwMakeContextCurrent(window);
         glfwSwapBuffers(window);
     }
-    */
 }
