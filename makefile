@@ -14,7 +14,8 @@ SIMGUIINCLUDE=$(SIMGUI)/include
 SIMGUIBIN=$(SIMGUI)/bin
 SIMGUIBUILD=$(SIMGUI)/build
 SIMGUISOURCES=$(wildcard $(SIMGUISRC)/*.cpp)
-SIMGUIOBJS=$(patsubst src/%.cpp, bin/%.o, $(SIMGUISOURCES))
+SIMGUIINCLUDES=$(wildcard $(SIMGUIINCLUDE)/*.h)
+SIMGUIOBJS=$(patsubst $(SIMGUISRC)/%.cpp, $(SIMGUIBIN)/%.o, $(SIMGUISOURCES))
 GL3W=$(ROOTDIR)/gl3w
 GL3WBIN=$(GL3W)/bin
 TARGET=$(SIMGUIBUILD)/simgui
@@ -53,19 +54,22 @@ $(IMGUIBIN)/%.o: $(IMGUI)/%.cpp
 $(SIMGUIBIN)/simgui.o: $(SIMGUIOBJS)
 	$(LD) $(LDFLAGS) -r $(SIMGUIOBJS) -o $@
 
-$(SIMGUIBIN)/%.o: $(SIMGUISRC)/%.cpp
+$(SIMGUIBIN)/%.o: $(SIMGUISRC)/%.cpp $(SIMGUIINCLUDES)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 clean: cleangl3w cleansimavr cleanimgui cleansimgui
 
 cleangl3w:
-	mv $(GL3WBIN)/gl3w.o ~/.Trash/
+	mv -f $(GL3WBIN)/gl3w.o ~/.local/share/Trash
 
 cleansimavr:
-	mv $(SIMAVROBJS) ~/.Trash
+	mv -f $(SIMAVRBIN)/simavr.o ~/.local/share/Trash
+	mv -f $(SIMAVROBJS) ~/.local/share/Trash
 
 cleanimgui:
-	mv $(IMGUIOBJS) ~/.Trash
+	mv -f $(IMGUIBIN)/imgui.o $(IMGUIOBJS) ~/.local/share/Trash
+	mv -f $(IMGUIOBJS) ~/.local/share/Trash
 
 cleansimgui:
-	mv $(SIMGUIOBJS) ~/.Trash
+	mv -f $(SIMGUIBIN)/simgui.o ~/.local/share/Trash
+	mv -f $(SIMGUIOBJS) ~/.local/share/Trash
