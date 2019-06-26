@@ -3,6 +3,7 @@
 #include "examples/imgui_impl_opengl3.h"
 #include "sim_avr.h"
 #include "file_manager.h"
+#include "listing_file.h"
 #include <GL/gl3w.h>  
 #include <GLFW/glfw3.h>
 #include <stdio.h>
@@ -37,6 +38,9 @@ int main(int argc, char *argv[])
     }*/
     fm.assemble();
     fm.generate_hex();
+    listing_file lst(fm.get_lst_file());
+    auto i = lst.parse_lst();
+    std::cout << i->line << "\n" << i->byte_address << "\n" << i->opcode << "\n" << i->instr << "\n";
     const char* hex_file = fm.get_hex_file().c_str();
     const char* simavr_args[] = {"./simavr", "-f", "16000000", "-m", "atmega2560", "--dump-vitals", "-", hex_file};
     glfwSetErrorCallback(glfw_error_callback);

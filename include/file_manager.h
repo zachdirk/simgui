@@ -13,7 +13,7 @@ public:
         S,
         OTHER
     };
-
+    //ignore this for now
     struct compile_args 
     {
         std::string mmcu;
@@ -77,6 +77,7 @@ public:
     //getters
     bool is_good() {return good;}
     file_type compilation_file_type() {return cf.type;}
+    std::string get_lst_file() {return cf.listing_file;}
     std::string get_hex_file() {return cf.hex_file;}
     //compilation functions
     bool compile(const compile_args& c);
