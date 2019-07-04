@@ -68,7 +68,7 @@ file_manager::file_manager(std::string& file_name) :good(true) //assume it succe
 bool file_manager::generate_hex()
 {
     //todo
-    std::string command = "objcopy -O ihex ";
+    std::string command = "avr-objcopy -O ihex ";
     command += cf.object_file;
     command += " ";
     command += cf.hex_file;
@@ -80,9 +80,20 @@ bool file_manager::generate_hex()
 bool file_manager::assemble()
 {
     //hard code the assembly options for now
-    std::string command = "avr-as -ahlns -L -mmcu=atmega2560 ";
+    std::string command = "avr-gcc -Wa,-alhns -mmcu=atmega2560 -g ";
     command += cf.assembly_file;
     command += " -o ";
+    command += cf.object_file;
+    command += " > ";
+    command += cf.listing_file;
+    std::cout << command << "\n";
+    int err = system(command.c_str());
+    return err != 0; //I'm assuming this will return 
+}
+
+bool file_manager::generate_lst()
+{
+    std::string command = "avr-objdump -m avr6 -S -l -d -g ";
     command += cf.object_file;
     command += " > ";
     command += cf.listing_file;

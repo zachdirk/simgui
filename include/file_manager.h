@@ -83,6 +83,7 @@ public:
     bool compile(const compile_args& c);
     bool assemble();
     bool generate_hex();
+    bool generate_lst();
     
 };
 

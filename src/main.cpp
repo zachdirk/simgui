@@ -1,3 +1,4 @@
+
 #include "imgui.h"
 #include "examples/imgui_impl_glfw.h"
 #include "examples/imgui_impl_opengl3.h"
@@ -38,9 +39,9 @@ int main(int argc, char *argv[])
     }*/
     fm.assemble();
     fm.generate_hex();
+    fm.generate_lst();
     listing_file lst(fm.get_lst_file());
     auto i = lst.parse_lst();
-    std::cout << i->line << "\n" << i->byte_address << "\n" << i->opcode << "\n" << i->instr << "\n";
     const char* hex_file = fm.get_hex_file().c_str();
     const char* simavr_args[] = {"./simavr", "-f", "16000000", "-m", "atmega2560", "--dump-vitals", "-", hex_file};
     glfwSetErrorCallback(glfw_error_callback);
@@ -66,11 +67,12 @@ int main(int argc, char *argv[])
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
-
+    bool show_demo_window = false;
     bool show_leds = false;
     bool show_buttons = false;
     bool show_shield = false;
-    bool show_code_window = false;
+    bool show_listing_window = false;
+    bool show_register_file = false;
     avr_t* avr = run_avr_main(8, const_cast<char**>(simavr_args)); 
     while (!glfwWindowShouldClose(window))
     {
@@ -84,110 +86,118 @@ int main(int argc, char *argv[])
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        static bool leds[6];
+        static int execution_state = 0; //0 = still in progress, 1 = done, 2 = crashed
         //main window
         {
             ImGui::Begin("This is the main window.");
             ImGui::Text("Use this window to select which other windows you would like to see.");
-            ImGui::Checkbox("Show the LED window?", &show_leds);
-            ImGui::Checkbox("Show the buttons window?", &show_buttons);
-            ImGui::Checkbox("Show the LCD shield window?", &show_shield);
-            ImGui::Checkbox("Show the code window?", &show_code_window);
+            ImGui::Checkbox("Show the demo window?", &show_demo_window);
+            ImGui::Checkbox("Show the listing file?", &show_listing_window);
+            ImGui::Checkbox("Show the register file?", &show_register_file);
             ImGui::End();
         }
-        if (show_leds)
+        if (show_demo_window)
+            ImGui::ShowDemoWindow(&show_demo_window);
+        if (show_listing_window)
         {
-            
-            ImGui::Begin("This window shows the current values of the LEDs.");
-            std::string str;
-            for (int i = 0; i < 6; i++)
-            {
-                if (leds[i])
-                    str = "Led " + std::to_string(i) + " is on";
-                else
-                    str = "Led " + std::to_string(i) + " is off";
-                ImGui::Text("%s",str.c_str());
-            }
-            ImGui::End();
-        }
-        if (show_buttons)
-        {
-            ImGui::Begin("This is the button window!");
-            if (ImGui::Button("Up"))
-                leds[0] = !leds[0];
-            if (ImGui::Button("Select"))
-                leds[1] = !leds[1];
+            static int test_type = 0;
+            static ImGuiTextBuffer log;
+            static int lines = lst.size();
+            ImGui::Begin("Listing File");
+            int pc = avr->pc;
+            ImGui::Text("Current Program Counter: %04hhx\n", pc>>1);
             ImGui::SameLine();
-            if (ImGui::Button("Left"))
-                leds[2] = !leds[2];
-            
-            
-            if (ImGui::Button("Right"))
-                leds[3] = !leds[3];
-            if (ImGui::Button("Reset"))
-                leds[4] = !leds[4];
-            ImGui::SameLine();
-            if (ImGui::Button("Down"))
-                leds[5] = !leds[5];
-            ImGui::End();
-        }
-        if (show_shield)
-        {
-            static int count = 0;
-            ImGui::Begin("This is the LCD window!");
-            char str1[] = "This is a very long string on line one!";
-            char str2[] = "This line two string is shorter.";
-            int len1 = strlen(str1);
-            static int ptr1 = 0;
-            int len2 = strlen(str2);
-            static int ptr2 = 0;
-            static char str1cpy[17];
-            static char str2cpy[17];
-            str1cpy[16] = '\0';
-            str2cpy[16] = '\0';
-            
-            for (int i = 0; i < 16; i++)
+            if (ImGui::Button("Execute next line"))
             {
-                str1cpy[i] = str1[(i+ptr1) % len1];
-                str2cpy[i] = str2[(i+ptr2) % len2];   
-            }
-            if (count % 125 == 0)
-            {
-                ++ptr1;
-                ++ptr2;
-            }
-
-            if (ptr1 == len1)
-                ptr1 = 0;
-            if (ptr2 == len2)
-                ptr2 = 0;
-            ImGui::Text("ptr1: %d ptr2: %d", ptr1, ptr2);
-            ImGui::TextColored(ImVec4(1.0f,0.0f,1.0f,1.0f), "%s", str1cpy);
-            ImGui::TextColored(ImVec4(1.0f,0.0f,1.0f,1.0f), "%s", str2cpy);
-            ImGui::End();
-            ++count;
-        }
-        if (show_code_window)
-        {
-            ImGui::Begin("This is the code window!");
-            if (ImGui::Button("Execute"))
-            {
-                int state = avr_run(avr);
-		        if (state == cpu_Done || state == cpu_Crashed)
-			        avr_terminate(avr);
-            }
-            for (int i = 0; i < 10; i++)
-            {
-                ImGui::Text("%.4x",opcodes[i*10]);
-                for (int j = 1; j < 10; j++)
+                if (execution_state == 0)
                 {
-                    ImGui::SameLine();
-                    ImGui::Text("%.4x",opcodes[i*10+j]);
+                    int state = avr_run(avr);
+                    if (state == cpu_Done)
+                        execution_state = 1;
+                    if (state == cpu_Crashed)
+                        execution_state = 2;
                 }
             }
+            ImGuiListClipper clipper(lines);
+            ImGui::Columns(4, "lst");
+            ImGui::Separator();
+            ImGui::Text("Line"); ImGui::NextColumn();
+            ImGui::Text("Mem"); ImGui::NextColumn();
+            ImGui::Text("Opcode"); ImGui::NextColumn();
+            ImGui::Text("Instr"); ImGui::NextColumn();
+            ImGui::Separator();
+            while (clipper.Step())
+            {
+                
+                for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
+                {
+                    listing_file::instruction instr_to_print = lst[i];
+                    //want to print like "1 0002 0AE9 ldi r16, 1"
+                    int byte_address = instr_to_print.byte_address_;
+                    char line_buff[5];
+                    char mem_buff[8];
+                    char opcode_buff[10];
+                    char instr_buff[100];
+                    sprintf(line_buff, "%3i", instr_to_print.line_);
+                    sprintf(mem_buff, "%04hhx", instr_to_print.byte_address_>>1);
+                    sprintf(opcode_buff, "%s\0", instr_to_print.opcode_.c_str());
+                    sprintf(instr_buff, "%s", instr_to_print.instr_.c_str());
+                    if (byte_address == pc)
+                    {
+                        ImGui::TextColored(ImVec4(1.0f,0.0f,1.0f,1.0f), line_buff); ImGui::NextColumn();
+                        ImGui::TextColored(ImVec4(1.0f,0.0f,1.0f,1.0f), mem_buff); ImGui::NextColumn();
+                        ImGui::TextColored(ImVec4(1.0f,0.0f,1.0f,1.0f), opcode_buff); ImGui::NextColumn();
+                        ImGui::TextColored(ImVec4(1.0f,0.0f,1.0f,1.0f), instr_buff); ImGui::NextColumn();
+                        
+                    }
+                    else
+                    {
+                        ImGui::TextUnformatted(line_buff); ImGui::NextColumn();
+                        ImGui::TextUnformatted(mem_buff); ImGui::NextColumn();
+                        ImGui::TextUnformatted(opcode_buff); ImGui::NextColumn();
+                        ImGui::TextUnformatted(instr_buff); ImGui::NextColumn();
+                    }
+                    ImGui::Separator();
+                }
+            }  
+            
             ImGui::End();
-		    
+                    
         }
+        if (show_register_file)
+        {
+            ImGui::Begin("Register File");
+            ImGui::Text("Status Register");
+            ImGui::Columns(8, "sreg");
+            ImGui::Separator();
+            ImGui::Text("I"); ImGui::NextColumn();
+            ImGui::Text("T"); ImGui::NextColumn();
+            ImGui::Text("H"); ImGui::NextColumn();
+            ImGui::Text("S"); ImGui::NextColumn();
+            ImGui::Text("V"); ImGui::NextColumn();
+            ImGui::Text("N"); ImGui::NextColumn();
+            ImGui::Text("Z"); ImGui::NextColumn();
+            ImGui::Text("C"); ImGui::NextColumn();
+            for (int i = 0; i < 8; i++)
+            {
+                ImGui::Text("%d", avr->sreg[i]); 
+                ImGui::NextColumn();
+            }
+            ImGui::Separator();
+            ImGui::Columns(4, "rfile");
+            for (int i = 0; i < 8; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    int reg = j + i*4;
+                    ImGui::Text("R%d: %02hhx\n", reg, avr->data[reg]);
+                    ImGui::NextColumn();
+                }
+            }  
+            ImGui::Columns(1);
+            ImGui::End(); 
+        }
+
 
         ImGui::Render();
         int display_w, display_h;

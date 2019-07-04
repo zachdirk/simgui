@@ -24,7 +24,8 @@ LIBS += -lGL -lelf `pkg-config --static --libs glfw3`
 CXXFLAGS += -I /usr/include -I$(SIMGUIINCLUDE) -I$(SIMAVR) -I$(IMGUI) -I$(SIMAVR)/sim -I$(SIMAVR)/sim/avr -I$(SIMAVR)/cores -I$(SIMAVR)/cores/avr
 LDFLAGS += -L/usr/lib/gcc/x86_64-linux-gnu/7.4.0
 
-
+test: $(TARGET)
+	$(TARGET) test.s
 
 $(TARGET): $(OBJS)
 	$(CXX) -o $@ $^ $(LIBS)
