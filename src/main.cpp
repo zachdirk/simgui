@@ -101,6 +101,7 @@ int main(int argc, char *argv[])
             ImGui::Checkbox("Show the register file?", &show_register_file);
             ImGui::Checkbox("Show flash memory?", &show_flash_memory);
             ImGui::Checkbox("Show data memory?", &show_data_memory);
+            ImGui::Checkbox("Show leds memory?", &show_leds);
             ImGui::End();
         }
         if (show_demo_window)
@@ -212,6 +213,68 @@ int main(int argc, char *argv[])
         if (show_data_memory)
         {
             data_mem.DrawWindow("Data Memory", avr->data, 1024, 0x0000);
+        }
+        if (show_leds)
+        {
+            uint8_t PORTL = avr->data[0x10B];
+            uint8_t PORTB = avr->data[0x25];
+            ImGui::Begin("LEDs");
+            ImGui::Text("LED Display");
+            ImGui::Columns(6, "leds");
+            ImGui::Separator();
+            if (PORTL & 0b10000000)
+            {
+                ImGui::Text("1"); ImGui::NextColumn();
+            }  
+            else 
+            {
+                ImGui::Text("0"); ImGui::NextColumn();
+            }
+               
+            if (PORTL & 0b00100000)
+            {
+                ImGui::Text("1"); ImGui::NextColumn();
+            }
+            else 
+            {
+                ImGui::Text("0"); ImGui::NextColumn();
+            } 
+            if (PORTL & 0b00001000)
+            {
+                ImGui::Text("1"); ImGui::NextColumn();
+            }
+            else 
+            {
+                ImGui::Text("0"); ImGui::NextColumn();
+            }
+                
+            if (PORTL & 0b00000010)
+            {
+                ImGui::Text("1"); ImGui::NextColumn();  
+            }
+                
+            else 
+            {
+                ImGui::Text("0"); ImGui::NextColumn();
+            }
+            if (PORTB & 0b00001000)
+            {
+                ImGui::Text("1"); ImGui::NextColumn();
+            }
+            else 
+            {
+                ImGui::Text("0"); ImGui::NextColumn();
+            }
+            if (PORTB & 0b00000010)
+            {
+                ImGui::Text("1"); ImGui::NextColumn();
+            }
+            else 
+            {
+                ImGui::Text("0"); ImGui::NextColumn();
+            }
+
+            ImGui::End();
         }
 
 
