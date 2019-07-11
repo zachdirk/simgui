@@ -25,7 +25,10 @@ CXXFLAGS += -I /usr/include -I$(SIMGUIINCLUDE) -I$(SIMAVR) -I$(IMGUI) -I$(SIMAVR
 LDFLAGS += -L/usr/lib/gcc/x86_64-linux-gnu/7.4.0
 
 test: $(TARGET)
-	$(TARGET) test.s
+	$(TARGET) test.S
+
+test2: $(TARGET)
+	$(TARGET) test2.S
 
 $(TARGET): $(OBJS)
 	$(CXX) -o $@ $^ $(LIBS)

@@ -13,7 +13,7 @@ file_manager::file_type file_manager::get_file_type(const std::string& file_name
     std::string extension = file_name.substr(file_name.find_last_of('.') + 1); //get the file extension
     if (extension == "c")
         return file_type::C;
-    else if (extension == "s")
+    else if (extension == "S")
         return file_type::S;
     else if (extension == "asm")
         return file_type::ASM;
@@ -36,7 +36,7 @@ file_manager::file_manager(std::string& file_name) :good(true) //assume it succe
     if (extension == file_type::C)
     {
         cf.type = file_type::C;
-        cf.assembly_file = cf.no_extension + ".s";
+        cf.assembly_file = cf.no_extension + ".S";
     }
     else if (extension == file_type::S)
     {
@@ -50,7 +50,7 @@ file_manager::file_manager(std::string& file_name) :good(true) //assume it succe
     }
     else 
     {
-        std::cerr << file_name << "doesn't appear to be a .c, .s, or .asm file\n";
+        std::cerr << file_name << "doesn't appear to be a .c, .S, or .asm file\n";
         good = false;
     }
     //at this point we know it's a valid file type
@@ -80,12 +80,11 @@ bool file_manager::generate_hex()
 bool file_manager::assemble()
 {
     //hard code the assembly options for now
-    std::string command = "avr-gcc -Wa,-alhns -mmcu=atmega2560 -g ";
+    //-nostartfiles tells it not to link the atmega code (what we want?)
+    std::string command = "avr-gcc -nostartfiles -mmcu=atmega2560 -g ";
     command += cf.assembly_file;
     command += " -o ";
     command += cf.object_file;
-    command += " > ";
-    command += cf.listing_file;
     std::cout << command << "\n";
     int err = system(command.c_str());
     return err != 0; //I'm assuming this will return 

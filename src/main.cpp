@@ -2,6 +2,7 @@
 #include "imgui.h"
 #include "examples/imgui_impl_glfw.h"
 #include "examples/imgui_impl_opengl3.h"
+#include "imgui_memory_editor.h"
 #include "sim_avr.h"
 #include "file_manager.h"
 #include "listing_file.h"
@@ -73,7 +74,11 @@ int main(int argc, char *argv[])
     bool show_shield = false;
     bool show_listing_window = false;
     bool show_register_file = false;
-    avr_t* avr = run_avr_main(8, const_cast<char**>(simavr_args)); 
+    bool show_flash_memory = false;
+    bool show_data_memory = false;
+    avr_t* avr = run_avr_main(8, const_cast<char**>(simavr_args));
+    static MemoryEditor flash_mem; 
+    static MemoryEditor data_mem; 
     while (!glfwWindowShouldClose(window))
     {
         ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -94,6 +99,8 @@ int main(int argc, char *argv[])
             ImGui::Checkbox("Show the demo window?", &show_demo_window);
             ImGui::Checkbox("Show the listing file?", &show_listing_window);
             ImGui::Checkbox("Show the register file?", &show_register_file);
+            ImGui::Checkbox("Show flash memory?", &show_flash_memory);
+            ImGui::Checkbox("Show data memory?", &show_data_memory);
             ImGui::End();
         }
         if (show_demo_window)
@@ -111,6 +118,7 @@ int main(int argc, char *argv[])
             {
                 if (execution_state == 0)
                 {
+                    //go to sim_core.c/avr_run_one() to see what this actually does
                     int state = avr_run(avr);
                     if (state == cpu_Done)
                         execution_state = 1;
@@ -196,6 +204,14 @@ int main(int argc, char *argv[])
             }  
             ImGui::Columns(1);
             ImGui::End(); 
+        }
+        if (show_flash_memory)
+        {
+            flash_mem.DrawWindow("Flash Memory", avr->flash, 1024, 0x0000);
+        }
+        if (show_data_memory)
+        {
+            data_mem.DrawWindow("Data Memory", avr->data, 1024, 0x0000);
         }
 
 
