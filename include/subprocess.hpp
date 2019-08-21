@@ -696,8 +696,12 @@ struct output
 
   output (FILE* fp):output(fileno(fp)) { assert(fp); }
 
-  output(const char* filename) {
-    int fd = open(filename, O_APPEND | O_CREAT | O_RDWR, 0640);
+  output(const char* filename, bool append=false) {
+    int fd;
+    if (append)
+      fd = open(filename, O_APPEND | O_CREAT | O_RDWR, 0640);
+    else
+      fd = open(filename, O_CREAT | O_RDWR, 0640);
     if (fd == -1) throw OSError("File not found: ", errno);
     wr_ch_ = fd;
   }
@@ -727,8 +731,12 @@ struct error
 
   error(FILE* fp):error(fileno(fp)) { assert(fp); }
 
-  error(const char* filename) {
-    int fd = open(filename, O_APPEND | O_CREAT | O_RDWR, 0640);
+  error(const char* filename, bool append=false) {
+    int fd;
+    if (append)
+      fd = open(filename, O_APPEND | O_CREAT | O_RDWR, 0640);
+    else 
+      fd = open(filename, O_CREAT | O_RDWR, 0640);
     if (fd == -1) throw OSError("File not found: ", errno);
     wr_ch_ = fd;
   }
