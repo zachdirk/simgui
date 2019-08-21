@@ -10,6 +10,7 @@ listing_file::instruction& listing_file::operator[] (const int index)
 
 std::vector<listing_file::instruction>::iterator listing_file::parse_lst()
 {
+    prog_.clear();
     std::ifstream f(file_name_.c_str());
     if (!(f.good()))
     {

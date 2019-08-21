@@ -6,52 +6,48 @@
 #include "sim_avr.h"
 #include "file_manager.h"
 #include "listing_file.h"
+#include "subprocess.hpp"
 #include <GL/gl3w.h>  
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 #include <string>
 #include <iostream>
 
+file_manager fm; //this could probably be in a class
+listing_file lst;
+avr_t* avr = nullptr;
+
 static void glfw_error_callback(int error, const char* description)
 {
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
+static void simulate()
+{
+    printf("assembling %s\n", fm.get_source_file().c_str());
+    fm.assemble(); //assembly the assembly
+    printf("generating hex from %s\n", fm.get_object_file().c_str());
+    fm.generate_hex(); //generate the ihex
+    printf("generating lst from %s\n", fm.get_object_file().c_str());
+    fm.generate_lst(); //generate the listing file
+    printf("parsing %s\n", fm.get_lst_file().c_str());
+    lst.set_source_file(fm.get_lst_file().c_str());
+    lst.parse_lst();
+    std::string hex_file = fm.get_hex_file();
+    const char* c_hex_file = hex_file.c_str();
+    const char* simavr_args[] = {"./simavr", "-f", "16000000", "-m", "atmega2560", "--dump-vitals", "-", c_hex_file};
+    avr = run_avr_main(8, const_cast<char**>(simavr_args));
+}
+
 int main(int argc, char *argv[])
 {
-    // Setup window
-    if (argc < 2)
-    {
-        std::cerr << "Need at least a file name to compile.\n";
-        return(1);
-    }
-    std::string s(argv[1]);
-    file_manager fm(s);
-    if (!(fm.is_good()))
-    {
-        std::cerr << "There was a problem with the file you provided.\n";
-        return(1);
-    }
-    file_manager::compile_args c;
-    /* figure this part out later
-    if (fm.compilation_file_type == file_manager::C)
-    {
-        fm.compile(c);
-    }*/
-    fm.assemble();
-    fm.generate_hex();
-    fm.generate_lst();
-    listing_file lst(fm.get_lst_file());
-    auto i = lst.parse_lst();
-    const char* hex_file = fm.get_hex_file().c_str();
-    const char* simavr_args[] = {"./simavr", "-f", "16000000", "-m", "atmega2560", "--dump-vitals", "-", hex_file};
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return 1;
     const char* glsl_version = "#version 130";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 example", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1280, 720, "SIMGUI", NULL, NULL);
     if (window == NULL)
         return 1;
     glfwMakeContextCurrent(window);
@@ -76,7 +72,7 @@ int main(int argc, char *argv[])
     bool show_register_file = false;
     bool show_flash_memory = false;
     bool show_data_memory = false;
-    avr_t* avr = run_avr_main(8, const_cast<char**>(simavr_args));
+    
     static MemoryEditor flash_mem; 
     static MemoryEditor data_mem; 
     while (!glfwWindowShouldClose(window))
@@ -93,6 +89,22 @@ int main(int argc, char *argv[])
         ImGui::NewFrame();
         static int execution_state = 0; //0 = still in progress, 1 = done, 2 = crashed
         //main window
+        if (ImGui::BeginMainMenuBar())
+        {
+            if (ImGui::MenuItem("Open"))
+            {
+                auto zenity = subprocess::check_output(
+                    {"zenity", "--file-selection", "--title=\"Select a file to assemble and run\""}, //get the file name
+                    subprocess::error{"zenity_errors.txt", false});
+                std::string s(zenity.buf.data());
+                fm.open(s.substr(0, s.length() - 1)); // s has a trailing newline
+            }
+            if (ImGui::MenuItem("Begin Simulating"))
+            {
+                simulate();
+            }
+            ImGui::EndMainMenuBar();
+        }
         {
             ImGui::Begin("This is the main window.");
             ImGui::Text("Use this window to select which other windows you would like to see.");
@@ -104,6 +116,9 @@ int main(int argc, char *argv[])
             ImGui::Checkbox("Show leds memory?", &show_leds);
             ImGui::End();
         }
+        
+
+
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
         if (show_listing_window)
@@ -127,7 +142,7 @@ int main(int argc, char *argv[])
                         execution_state = 2;
                 }
             }
-            ImGuiListClipper clipper(lines);
+            //ImGuiListClipper clipper(lines);
             ImGui::Columns(4, "lst");
             ImGui::Separator();
             ImGui::Text("Line"); ImGui::NextColumn();
@@ -135,10 +150,9 @@ int main(int argc, char *argv[])
             ImGui::Text("Opcode"); ImGui::NextColumn();
             ImGui::Text("Instr"); ImGui::NextColumn();
             ImGui::Separator();
-            while (clipper.Step())
-            {
-                
-                for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
+            //while (clipper.Step())
+            //{
+                for (int i = 0; i < lst.size(); i++)
                 {
                     listing_file::instruction instr_to_print = lst[i];
                     //want to print like "1 0002 0AE9 ldi r16, 1"
@@ -168,7 +182,7 @@ int main(int argc, char *argv[])
                     }
                     ImGui::Separator();
                 }
-            }  
+            //}  
             
             ImGui::End();
                     

@@ -38,9 +38,10 @@ class listing_file
             }
         };
 
-        listing_file(std::string file_name) : file_name_(file_name) {}
+        listing_file(){}
         int size() {return prog_.size();}
         instruction& operator[] (const int index);
+        void set_source_file(const std::string& file_name) {file_name_ = file_name;}
         std::vector<instruction>::iterator begin() {return prog_.begin();}
         std::vector<instruction>::iterator parse_lst();
     private:
