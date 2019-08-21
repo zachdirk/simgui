@@ -2,7 +2,7 @@
 #include <fstream>
 #include <string>
 #include <iostream>
-
+#include "subprocess.hpp"
 std::string file_manager::get_file_name_no_extension(const std::string& file_name)
 {
     return file_name.substr(0, file_name.find_last_of('.'));
@@ -65,40 +65,35 @@ file_manager::file_manager(std::string& file_name) :good(true) //assume it succe
 
 }
 
+bool file_manager::assemble()
+{
+    //hard code the assembly options for now, see readme for explanations
+    auto assemble = subprocess::Popen(
+        {"avr-gcc", "-nostartfiles", "-mmcu=atmega2560", "-x", "assembler-with-cpp", "-g", cf.assembly_file.c_str(), "-o", cf.object_file.c_str()}, //command and args
+        subprocess::error{"assembler_errors.txt"}); //redirect errors if there's a problem assembling
+    assemble.wait(); //wait for assembly to finish
+    return true; //I'm assuming this will return 
+}
+
+
 bool file_manager::generate_hex()
 {
     //todo
-    std::string command = "avr-objcopy -O ihex ";
-    command += cf.object_file;
-    command += " ";
-    command += cf.hex_file;
-    std::cout << command << "\n";
-    int err = system(command.c_str());
-    return err != 0;
-}
-
-bool file_manager::assemble()
-{
-    //hard code the assembly options for now
-    //-nostartfiles tells it not to link the atmega code (what we want?)
-    std::string command = "avr-gcc -nostartfiles -mmcu=atmega2560 -g ";
-    command += cf.assembly_file;
-    command += " -o ";
-    command += cf.object_file;
-    std::cout << command << "\n";
-    int err = system(command.c_str());
-    return err != 0; //I'm assuming this will return 
+    auto generate_hex = subprocess::Popen(
+        {"avr-objcopy", "-0", "ihex", cf.object_file.c_str(), cf.hex_file.c_str()}, //command + args
+        subprocess::error{"generate_hex_errors.txt"}); //redirect errors if there's a problem generating the hex
+    generate_hex.wait(); //wait for generation to finish
+    return true;
 }
 
 bool file_manager::generate_lst()
 {
-    std::string command = "avr-objdump -m avr6 -S -l -d -g ";
-    command += cf.object_file;
-    command += " > ";
-    command += cf.listing_file;
-    std::cout << command << "\n";
-    int err = system(command.c_str());
-    return err != 0; //I'm assuming this will return 
+    auto generate_lst = subprocess::Popen(
+        {"avr-objdump", "-m", "avr6", "-S", "-l", "-d", "-g", cf.object_file.c_str()}, //specify command and arguments
+        subprocess::output{cf.listing_file.c_str()}, //redirect output 
+        subprocess::error{"lst_errors.txt"}); //redirect errors if there's a problem generating the lst file
+    generate_lst.wait(); //wait for generation to finish
+    return true; //I'm assuming this will return 
 }
 
 bool file_manager::compile(const file_manager::compile_args& c)
