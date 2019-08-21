@@ -14,24 +14,21 @@ SIMGUIINCLUDE=$(SIMGUI)/include
 SIMGUIBIN=$(SIMGUI)/bin
 SIMGUIBUILD=$(SIMGUI)/build
 SIMGUISOURCES=$(wildcard $(SIMGUISRC)/*.cpp)
-SIMGUIINCLUDES=$(wildcard $(SIMGUIINCLUDE)/*.h)
+SIMGUIINCLUDES=$(wildcard $(SIMGUIINCLUDE)/*.h $(SIMGUIINCLUDE)/*.hpp)
 SIMGUIOBJS=$(patsubst $(SIMGUISRC)/%.cpp, $(SIMGUIBIN)/%.o, $(SIMGUISOURCES))
 GL3W=$(ROOTDIR)/gl3w
 GL3WBIN=$(GL3W)/bin
 TARGET=$(SIMGUIBUILD)/simgui
 OBJS=$(SIMAVRBIN)/simavr.o $(IMGUIBIN)/imgui.o $(SIMGUIBIN)/simgui.o $(GL3WBIN)/gl3w.o
 LIBS += -lGL -lelf `pkg-config --static --libs glfw3`
-CXXFLAGS += -I /usr/include -I$(SIMGUIINCLUDE) -I$(SIMAVR) -I$(IMGUI) -I$(SIMAVR)/sim -I$(SIMAVR)/sim/avr -I$(SIMAVR)/cores -I$(SIMAVR)/cores/avr
+CXXFLAGS += -I /usr/include -I$(SIMGUIINCLUDE) -I$(SIMAVR) -I$(IMGUI) -I$(SIMAVR)/sim -I$(SIMAVR)/sim/avr -I$(SIMAVR)/cores -I$(SIMAVR)/cores/avr -pthread
 LDFLAGS += -L/usr/lib/gcc/x86_64-linux-gnu/7.4.0
 
 test: $(TARGET)
-	$(TARGET) test.S
+	$(TARGET)
 
-test2: $(TARGET)
-	$(TARGET) test2.S
-
-$(TARGET): $(OBJS)
-	$(CXX) -o $@ $^ $(LIBS)
+$(TARGET): $(OBJS) 
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
 ##gl3w
 $(GL3WBIN)/gl3w.o: $(GL3W)/gl3w.c
 	$(CC) $(CXXFLAGS) -c -o $@ $<
@@ -47,7 +44,7 @@ $(SIMAVR)/sim/%.o: $(SIMAVR)/sim/%.c
 	$(CC) $(CXXFLAGS) -c -o $@ $<
 
 ##IMGUI
-$(IMGUIBIN)/imgui.o: $(IMGUIOBJS)
+$(IMGUIBIN)/imgui.o: $(IMGUIOBJS) $(IMGUI)/imgui_memory_editor.h
 	$(LD) $(LDFLAGS) -r $(IMGUIOBJS) -o $@ 
 
 $(IMGUIBIN)/%.o: $(IMGUI)/%.cpp
@@ -55,7 +52,7 @@ $(IMGUIBIN)/%.o: $(IMGUI)/%.cpp
 
 ##SIMGUI
 
-$(SIMGUIBIN)/simgui.o: $(SIMGUIOBJS)
+$(SIMGUIBIN)/simgui.o: $(SIMGUIOBJS) $(SIMGUIINCLUDES)
 	$(LD) $(LDFLAGS) -r $(SIMGUIOBJS) -o $@
 
 $(SIMGUIBIN)/%.o: $(SIMGUISRC)/%.cpp $(SIMGUIINCLUDES)
@@ -71,7 +68,7 @@ cleansimavr:
 	mv -f $(SIMAVROBJS) ~/.local/share/Trash
 
 cleanimgui:
-	mv -f $(IMGUIBIN)/imgui.o $(IMGUIOBJS) ~/.local/share/Trash
+	mv -f $(IMGUIBIN)/imgui.o ~/.local/share/Trash
 	mv -f $(IMGUIOBJS) ~/.local/share/Trash
 
 cleansimgui:
