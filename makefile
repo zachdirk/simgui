@@ -58,7 +58,10 @@ $(SIMGUIBIN)/simgui.o: $(SIMGUIOBJS) $(SIMGUIINCLUDES)
 $(SIMGUIBIN)/%.o: $(SIMGUISRC)/%.cpp $(SIMGUIINCLUDES)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-clean: cleangl3w cleansimavr cleanimgui cleansimgui
+clean:  cleanbuild cleansimgui cleanimgui cleansimavr cleangl3w
+
+cleanbuild:
+	mv -f $(TARGET) ~/.local/share/Trash
 
 cleangl3w:
 	mv -f $(GL3WBIN)/gl3w.o ~/.local/share/Trash

@@ -1,3 +1,6 @@
+#ifndef FILE_MANAGER_H
+#define FILE_MANAGER_H
+
 #include <string>
 #include <iostream>
 
@@ -39,3 +42,4 @@ public:
     void generate_lst();
 };
 
+#endif
