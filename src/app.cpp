@@ -7,15 +7,58 @@
 #include "listing_file.h"
 #include "subprocess.hpp"
 #include "app.h"
+#include "json.hpp"
 #include <GL/gl3w.h>  
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 #include <string>
 #include <iostream>
-
+#include <fstream>
 static void glfw_error_callback(int error, const char* description)
 {
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+}
+
+void Simgui::parse_config(std::string file_name)
+{
+    std::ifstream config_file(file_name.c_str());
+    nlohmann::json config;
+    config_file >> config;
+    arch_ = config["arch"];
+    mmcu_ = config["mmcu"];
+    for (auto peripheral : config["peripherals"])
+    {
+        Peripheral p;
+        p.num_ = peripheral["num"];
+        p.name_ = peripheral["name"];
+        for (auto input: peripheral["inputs"])
+        {  
+            InputPeripheral ip;
+            ip.name_ = input["name"];
+            for (auto mod: input["mod"])
+            {
+                std::string mem = mod["mem"];
+                int int_mem = std::stoul(mem, nullptr, 16);
+                std::string val = mod["val"];
+                int int_val = std::stoul(val, nullptr, 16);
+                ip.mods_[int_mem] = int_val;
+            }
+            p.inputs_.push_back(ip);
+        }
+        for (auto output: peripheral["outputs"])
+        {
+            OutputPeripheral op;
+            op.name_ = output["name"];
+            for (auto read: output["read"])
+            {
+                std::string mem = read;
+                int int_mem = std::stoul(mem, nullptr, 16);
+                op.reads_.push_back(int_mem);
+            }
+            p.outputs_.push_back(op);
+        }
+        peripherals_.push_back(p);
+    }
 }
 
 void Simgui::sim()
@@ -66,14 +109,11 @@ bool Simgui::init()
 void Simgui::run()
 {
     bool show_demo_window = false;
-    bool show_leds = false;
-    bool show_buttons = false;
-    bool show_shield = false;
     bool show_listing_window = false;
     bool show_register_file = false;
     bool show_flash_memory = false;
     bool show_data_memory = false;
-    
+    bool show_peripherals = false;
     static MemoryEditor flash_mem; 
     static MemoryEditor data_mem; 
     while (!glfwWindowShouldClose(window_))
@@ -104,6 +144,15 @@ void Simgui::run()
             {
                 sim();
             }
+            if (ImGui::MenuItem("Load Config"))
+            {
+                auto zenity = subprocess::check_output(
+                    {"zenity", "--file-selection", "--title=\"Select a file to assemble and run\""}, //get the file name
+                    subprocess::error{"zenity_errors.txt", false});
+                std::string s(zenity.buf.data());
+                std::cout << "parsing " << s << "\n";
+                parse_config(s.substr(0, s.length() - 1)); // s has a trailing newline
+            }
             ImGui::EndMainMenuBar();
         }
         {
@@ -114,7 +163,7 @@ void Simgui::run()
             ImGui::Checkbox("Show the register file?", &show_register_file);
             ImGui::Checkbox("Show flash memory?", &show_flash_memory);
             ImGui::Checkbox("Show data memory?", &show_data_memory);
-            ImGui::Checkbox("Show leds memory?", &show_leds);
+            ImGui::Checkbox("Show peripherals?", &show_peripherals);
             ImGui::End();
         }
         
@@ -225,70 +274,33 @@ void Simgui::run()
         {
             data_mem.DrawWindow("Data Memory", avr_->data, 1024, 0x0000);
         }
-        if (show_leds)
+        if (show_peripherals)
         {
-            uint8_t PORTL = avr_->data[0x10B];
-            uint8_t PORTB = avr_->data[0x25];
-            ImGui::Begin("LEDs");
-            ImGui::Text("LED Display");
-            ImGui::Columns(6, "leds");
-            ImGui::Separator();
-            if (PORTL & 0b10000000)
+            for (Peripheral p: peripherals_)
             {
-                ImGui::Text("1"); ImGui::NextColumn();
-            }  
-            else 
-            {
-                ImGui::Text("0"); ImGui::NextColumn();
-            }
-               
-            if (PORTL & 0b00100000)
-            {
-                ImGui::Text("1"); ImGui::NextColumn();
-            }
-            else 
-            {
-                ImGui::Text("0"); ImGui::NextColumn();
-            } 
-            if (PORTL & 0b00001000)
-            {
-                ImGui::Text("1"); ImGui::NextColumn();
-            }
-            else 
-            {
-                ImGui::Text("0"); ImGui::NextColumn();
-            }
-                
-            if (PORTL & 0b00000010)
-            {
-                ImGui::Text("1"); ImGui::NextColumn();  
-            }
-                
-            else 
-            {
-                ImGui::Text("0"); ImGui::NextColumn();
-            }
-            if (PORTB & 0b00001000)
-            {
-                ImGui::Text("1"); ImGui::NextColumn();
-            }
-            else 
-            {
-                ImGui::Text("0"); ImGui::NextColumn();
-            }
-            if (PORTB & 0b00000010)
-            {
-                ImGui::Text("1"); ImGui::NextColumn();
-            }
-            else 
-            {
-                ImGui::Text("0"); ImGui::NextColumn();
-            }
 
-            ImGui::End();
+                ImGui::Begin(p.name_.c_str());
+                for (InputPeripheral input : p.inputs_)
+                {
+                    if (ImGui::Button(input.name_.c_str()))
+                    {
+                        for (auto pair: input.mods_)
+                        {
+                            avr_->data[pair.first] = pair.second;
+                        }
+                    }
+                }
+                for (OutputPeripheral output : p.outputs_)
+                {
+                    ImGui::Text(output.name_.c_str());
+                    for (int mem : output.reads_)
+                    {
+                        ImGui::Text("Mem %02hhx: %02hhx\n", mem, avr_->data[mem]);
+                    }
+                }
+                ImGui::End();
+            }
         }
-
-
         ImGui::Render();
         int display_w, display_h;
         glfwMakeContextCurrent(window_);

@@ -1,0 +1,97 @@
+{
+    "arch" : "avr6",
+    "mmcu" : "atmega2560",
+    "peripherals" : [
+        {
+            "num": 3,
+            "name": "buttons",
+            "inputs": [
+                {
+                    "name": "select",
+                    "mod": [
+                        {
+                            "mem" : "0x100",
+                            "val" : "0x50"
+                        },
+                        {
+                            "mem" : "0x101",
+                            "val" : "0x01"
+                        }
+                    ]
+                },
+                {
+                    "name": "up",
+                    "mod": [
+                        {
+                            "mem" : "0x100",
+                            "val" : "0x51"
+                        },
+                        {
+                            "mem" : "0x101",
+                            "val" : "0x02"
+                        }
+                    ]
+                },
+                {
+                    "name": "down",
+                    "mod": [
+                        {
+                            "mem" : "0x100",
+                            "val" : "0x52"
+                        },
+                        {
+                            "mem" : "0x101",
+                            "val" : "0x03"
+                        }
+                    ]
+                }
+                
+            ],
+            "outputs": []
+        },
+        {
+            "num": 6,
+            "name": "leds",
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "led1",
+                    "read": [
+                        "0x100"
+                    ]
+                },
+                {
+                    "name": "led2",
+                    "read": [
+                        "0x101"
+                    ]
+                },
+                {
+                    "name": "led3",
+                    "read": [
+                        "0x102"
+                    ]
+                },
+                {
+                    "name": "led4",
+                    "read": [
+                        "0x103"
+                    ]
+                },
+                {
+                    "name": "led5",
+                    "read": [
+                        "0x104"
+                    ]
+                },
+                {
+                    "name": "led6",
+                    "read": [
+                        "0x105"
+                    ]
+                }
+            
+            ]
+        }
+    ]
+}
