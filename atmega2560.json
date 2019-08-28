@@ -7,28 +7,15 @@
             "name": "buttons",
             "inputs": [
                 {
-                    "name": "select",
+                    "name": "left",
                     "mod": [
                         {
-                            "mem" : "0x100",
-                            "val" : "0x50"
+                            "mem" : "0x79",
+                            "val" : "0x2"
                         },
                         {
-                            "mem" : "0x101",
-                            "val" : "0x01"
-                        }
-                    ]
-                },
-                {
-                    "name": "up",
-                    "mod": [
-                        {
-                            "mem" : "0x100",
-                            "val" : "0x51"
-                        },
-                        {
-                            "mem" : "0x101",
-                            "val" : "0x02"
+                            "mem" : "0x78",
+                            "val" : "0x26"
                         }
                     ]
                 },
@@ -36,16 +23,54 @@
                     "name": "down",
                     "mod": [
                         {
-                            "mem" : "0x100",
-                            "val" : "0x52"
+                            "mem" : "0x79",
+                            "val" : "0x1"
                         },
                         {
-                            "mem" : "0x101",
-                            "val" : "0x03"
+                            "mem" : "0x78",
+                            "val" : "0x5E"
+                        }
+                    ]
+                },
+                {
+                    "name": "up",
+                    "mod": [
+                        {
+                            "mem" : "0x79",
+                            "val" : "0x0"
+                        },
+                        {
+                            "mem" : "0x78",
+                            "val" : "0x7D"
+                        }
+                    ]
+                },
+                {
+                    "name": "right",
+                    "mod": [
+                        {
+                            "mem" : "0x79",
+                            "val" : "0x0"
+                        },
+                        {
+                            "mem" : "0x78",
+                            "val" : "0x19"
+                        }
+                    ]
+                },
+                {
+                    "name": "select",
+                    "mod": [
+                        {
+                            "mem" : "0x79",
+                            "val" : "0x2"
+                        },
+                        {
+                            "mem" : "0x78",
+                            "val" : "0xEE"
                         }
                     ]
                 }
-                
             ],
             "outputs": []
         },
@@ -55,42 +80,55 @@
             "inputs": [],
             "outputs": [
                 {
+                    "name": "led0",
+                    "type": "bit",
+                    "position": 1,
+                    "mem": "0x05"
+                },
+                {
                     "name": "led1",
-                    "read": [
-                        "0x100"
-                    ]
+                    "type": "bit",
+                    "position": 3,
+                    "mem": "0x05"
                 },
                 {
                     "name": "led2",
-                    "read": [
-                        "0x101"
-                    ]
+                    "type": "bit",
+                    "position": 1,
+                    "mem": "0x10B"
                 },
                 {
                     "name": "led3",
-                    "read": [
-                        "0x102"
-                    ]
+                    "type": "bit",
+                    "position": 3,
+                    "mem": "0x10B"
                 },
                 {
                     "name": "led4",
-                    "read": [
-                        "0x103"
-                    ]
+                    "type": "bit",
+                    "position": 5,
+                    "mem": "0x10B"
                 },
                 {
                     "name": "led5",
-                    "read": [
-                        "0x104"
-                    ]
-                },
-                {
-                    "name": "led6",
-                    "read": [
-                        "0x105"
-                    ]
+                    "type": "bit",
+                    "position": 7,
+                    "mem": "0x10B"
                 }
             
+            ]
+        },
+        {
+            "num": 1,
+            "name": "LCD Shield",
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "LCD Shield",
+                    "type": "ascii",
+                    "start": "0x200",
+                    "end": "0x220"
+                }
             ]
         }
     ]
