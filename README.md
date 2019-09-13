@@ -16,7 +16,7 @@ and gl3w: https://github.com/skaslev/gl3w
 
 In order to use the makefile in simgui, place these all in the same high level directory without changing their names. The makefile references `../simgui`, `../imgui`, `../simavr`, and `../gl3w/`. The simplest (but most time consuming) way to build is just to use make and then apt-get to install any missing packages. Eventually it will work.
 
-#notes:
+# notes:
 
 ## source repos for code I didn't write
 
